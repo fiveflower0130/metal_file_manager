@@ -6,18 +6,18 @@
 
   let file: File | undefined;
   let uploading = false;
-  let uploadProgress = 0; // pregress為0，並使用 CSS 動畫
+  let uploadProgress = 0;
   let message = '';
   let messageType: 'success' | 'error' = 'success';
 
-  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB 
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
   const handleFileSelect = (e: Event) => {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
       const selectedFile = target.files[0];
 
-      if (selectedFile.size > MAX_FILE_SIZE) { // 
+      if (selectedFile.size > MAX_FILE_SIZE) {
         message = '檔案大小超過 50MB 限制。';
         messageType = 'error';
         file = undefined;
@@ -46,27 +46,35 @@
     try {
       uploading = true;
       message = '';
-      uploadProgress = 0;
       const userId = session.user.id;
       
-      // 1. 上傳檔案到「儲存桶」
-      const filePath = `${userId}/${file.name}`;
+      // 保留「原始檔名」(用於資料庫)
+      const originalFileName = file.name;
+
+      // 建立「安全檔名」(用於儲存路徑)
+      // 替換所有非 (英數、點、底線、橫線) 的字元為 '_'
+      // 這會處理掉中文和空格
+      const sanitizedFileName = originalFileName.replace(/[^a-zA-Z0-9._-]/g, '_');
       
+      // 建立「安全路徑」
+      const filePath = `${userId}/${sanitizedFileName}`;
+
+      // 使用「安全路徑」上傳檔案
       const { error: uploadError } = await supabase.storage
         .from('file_upload') //
-        .upload(filePath, file, {
+        .upload(filePath, file, { //
           cacheControl: '3600',
-          upsert: false // false = 不允許覆蓋同名檔案
+          upsert: false 
         });
 
       if (uploadError) {
         if (uploadError.message.includes('duplicate')) {
-            throw new Error('該檔名已存在。請更換檔名後重試。');
+            throw new Error('該檔名已存在 (或清理後的檔名重複)。請更換檔名後重試。');
         }
         throw uploadError;
       }
 
-      // 2. 取得檔案的公開 URL
+      // 2. 取得「安全路徑」的公開 URL
       const { data: { publicUrl } } = supabase.storage
         .from('file_upload') //
         .getPublicUrl(filePath);
@@ -78,12 +86,12 @@
       // 3. 將中繼資料寫入「資料庫」
       const { error: dbError } = await supabase
         .from('files') //
-        .insert({ // [cite: 16]
-          file_name: file.name, // [cite: 16]
-          file_url: publicUrl, // [cite: 16]
-          file_size: file.size, // [cite: 16]
+        .insert({
+          file_name: originalFileName, //
+          file_url: publicUrl,
+          file_size: file.size,
+          file_path: filePath,
           user_id: userId
-          // upload_timestamp 欄位 [cite: 16] 是由 'created_at' 欄位自動處理的
         });
 
       if (dbError) {
@@ -95,11 +103,7 @@
       file = undefined;
       
     } catch (error: any) {
-      if (error.message.includes('Invalid key')) {
-         message = '上傳失敗：檔名可能包含無效字元 (例如 /)。請更換檔名後重試。';
-      } else {
-         message = error.message || '上傳失敗。';
-      }
+      message = error.message || '上傳失敗。';
       messageType = 'error';
     } finally {
       uploading = false;
