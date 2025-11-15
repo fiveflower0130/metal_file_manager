@@ -49,26 +49,38 @@
     try {
       uploading = true;
       message = '';
+      uploadProgress = 0;
       const userId = session.user.id;
       
       // 保留「原始檔名」(用於資料庫)
       const originalFileName = file.name;
-
       // 建立「安全檔名」(用於儲存路徑)
-      // 替換所有非 (英數、點、底線、橫線) 的字元為 '_'
-      // 這會處理掉中文和空格
-      const sanitizedFileName = originalFileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-      
+      const sanitizedFileName = originalFileName.replace(/[^a-zA-Z0-9._-]/g, '_');  
       // 建立「安全路徑」
       const filePath = `${userId}/${sanitizedFileName}`;
-
-      // 使用「安全路徑」上傳檔案
-      const { error: uploadError } = await supabase.storage
-        .from('file_upload') //
-        .upload(filePath, file, { //
+      // 使用 Supabase Storage 上傳，並模擬進度
+      const uploadPromise = supabase.storage
+        .from('file_upload')
+        .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false 
+          upsert: false
         });
+
+      // 模擬進度（根據檔案大小調整速度）
+      const estimatedTime = Math.min(file.size / (1024 * 1024) * 500, 5000); // 每 MB 約 500ms，最多 5 秒
+      const steps = 100;
+      const interval = estimatedTime / steps;
+      
+      let progressInterval = setInterval(() => {
+        if (uploadProgress < 90) {
+          uploadProgress += 1;
+        }
+      }, interval);
+
+      const { error: uploadError } = await uploadPromise;
+      
+      clearInterval(progressInterval);
+      uploadProgress = 100;
 
       if (uploadError) {
         if (uploadError.message.includes('duplicate')) {
@@ -152,11 +164,11 @@
     {#if uploading}
       <div class="w-full bg-gray-200 rounded-full h-2.5">
         <div 
-          class="bg-indigo-600 h-2.5 rounded-full animate-pulse" 
-          style="width: 100%"
+          class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" 
+          style="width: {uploadProgress}%"
         ></div>
       </div>
-      <span class="text-sm text-gray-600">上傳中，請稍候...</span>
+      <span class="text-sm text-gray-600">上傳中... {Math.round(uploadProgress)}%</span>
     {/if}
 
     <button 
