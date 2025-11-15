@@ -9,10 +9,19 @@
   export let data: PageData
   $: session = data.session
   
+  let fileListComponent: FileList;
+  
   // 反應式檢查 session，如果沒有就導向登入頁
   $: if (typeof window !== 'undefined' && !session) {
     goto('/login')
   }
+  
+  // 處理上傳成功事件
+  const handleUploadSuccess = () => {
+    if (fileListComponent) {
+      fileListComponent.refresh();
+    }
+  };
 
   const handleLogout = async () => {
     console.log('handleLogout called...');
@@ -44,8 +53,8 @@
   
   <!--需要 session 才顯示上傳元件-->
   {#if session}
-    <FileUpload {session} />
-    <FileList />
+    <FileUpload {session} on:uploadSuccess={handleUploadSuccess} />
+    <FileList bind:this={fileListComponent} />
   {/if}
   
   <!--

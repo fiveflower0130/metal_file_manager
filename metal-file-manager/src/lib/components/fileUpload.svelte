@@ -1,8 +1,11 @@
 <script lang="ts">
   import { supabase } from '$lib/supabaseClient';
   import type { Session } from '@supabase/supabase-js';
+  import { createEventDispatcher } from 'svelte';
 
   export let session: Session;
+  
+  const dispatch = createEventDispatcher();
 
   let file: File | undefined;
   let uploading = false;
@@ -101,6 +104,9 @@
       message = '檔案上傳成功！';
       messageType = 'success';
       file = undefined;
+      
+      // 派發事件通知父元件刷新列表
+      dispatch('uploadSuccess');
       
     } catch (error: any) {
       message = error.message || '上傳失敗。';

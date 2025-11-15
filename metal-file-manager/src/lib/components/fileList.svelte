@@ -18,6 +18,11 @@
   let editingId: string | null = null;
   let editingName = '';
 
+  // 暴露 refresh 函式給父元件
+  export const refresh = () => {
+    fetchFiles();
+  };
+
   // 載入檔案列表
   const fetchFiles = async () => {
     try {
@@ -66,9 +71,10 @@
 
       if (dbError) throw dbError;
 
-      // 從 UI 列表中移除該檔案
-      files = files.filter(f => f.id !== file.id);
       message = `"${file.file_name}" 已成功刪除。`;
+      
+      // 刷新列表以確保同步
+      await fetchFiles();
 
     } catch (error: any) {
       message = `刪除失敗: ${error.message}`;
@@ -120,15 +126,11 @@
         .select(); // 要求 Supabase 回傳更新後的那一筆資料
 
       if (error) throw error;
-      // 更新 UI (無需重新整理)
-      if (data && data.length > 0) {
-        // 在 files 陣列中找到並更新該筆資料
-        const index = files.findIndex(f => f.id === file.id);
-        if (index !== -1) {
-          files[index] = data[0] as FileEntry;
-        }
-      }   
+      
       message = '檔名更新成功！';
+      
+      // 刷新列表以確保同步
+      await fetchFiles();
 
     } catch (error: any) {
       message = `更新失敗: ${error.message}`;
