@@ -1,7 +1,7 @@
 // src/routes/+layout.ts
 import type { LayoutLoad } from './$types'
 import { supabase } from '$lib/supabaseClient'
-import { redirect } from '@sveltejs/kit' // <-- 1. 匯入 redirect
+import { redirect } from '@sveltejs/kit'
 
 export const load: LayoutLoad = async ({ depends, url }) => {
   /**
@@ -14,7 +14,7 @@ export const load: LayoutLoad = async ({ depends, url }) => {
   // 從 Supabase 獲取當前的 session
   const { data: { session } } = await supabase.auth.getSession()
 
-  // --- 2. 這是新的「Auth 守衛」邏輯 ---
+  // Auth 守衛邏輯 ---
   const pathname = url.pathname
   
   // 如果使用者未登入，且他們不在 /login 頁面
@@ -29,6 +29,6 @@ export const load: LayoutLoad = async ({ depends, url }) => {
     throw redirect(303, '/')
   }
   // --- Auth 守衛結束 ---
-  
+
   return { session }
 }

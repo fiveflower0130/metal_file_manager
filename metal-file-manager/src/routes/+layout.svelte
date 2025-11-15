@@ -3,24 +3,32 @@
   import { onMount } from 'svelte'
   import { supabase } from '$lib/supabaseClient'
   import type { LayoutData } from './$types'
-  
-  // 導入 Tailwind CSS 的基礎樣式 (SvelteKit + Tailwind 會自動處理)
-  import favicon from '$lib/assets/favicon.svg';
+  import { goto } from '$app/navigation' // <-- 匯入 goto
+
   import '../app.css';
 
-  // 從 +layout.ts 接收 session 資料
   export let data: LayoutData
-  
-  // 建立一個響應式變數
   $: session = data.session
 
   onMount(() => {
-    // 監聽 Supabase Auth 狀態的變化
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       
-      // 檢查 session 是否真的改變了
-      console.log('Auth state changed, invalidating session...');
-      invalidate('supabase:auth')
+      console.log('Auth state changed:', event); // <-- 除錯用
+
+      // 1. 觸發 +layout.ts 重新運行
+      invalidate('supabase:auth') 
+      
+      // 2.【客戶端守衛】(處理 Stale Session 和即時登出)
+      // 如果事件是 SIGNED_OUT 或 newSession 變為 null，
+      // 我們立即在「客戶端」觸發 goto 導向。
+      if (event === 'SIGNED_OUT' || !newSession) {
+        console.log('Detected SIGNED_OUT, forcing client-side redirect to /login');
+        
+        // 確保我們不會在 /login 頁面又把自己導向 /login (雖然 +layout.ts 應該會處理)
+        if (window.location.pathname !== '/login') {
+          goto('/login'); // <-- 強制客戶端導向
+        }
+      }
     })
 
     // 在元件卸載時取消訂閱
