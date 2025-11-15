@@ -5,6 +5,9 @@
   import { supabase } from '$lib/supabaseClient'
   import type { PageData } from './$types'
 
+  // 1. 匯入我們剛建立的元件
+  import FileUpload from '$lib/components/fileUpload.svelte'; // <-- 修正：小寫 'f'
+
   export let data: PageData
   $: session = data.session
 
@@ -17,8 +20,6 @@
       alert(error.message)
     } else {
       console.log('Supabase signOut successful.');
-      // 登出成功，不需要手動 goto
-      // +layout.svelte 的 onAuthStateChange 會自動偵測到
     }
   }
 </script>
@@ -37,9 +38,10 @@
     </button>
   </div>
   
-  <div class="rounded-lg bg-white p-6 shadow">
-    <h2 class="text-xl font-semibold">檔案上傳區 (即將推出)</h2>
-  </div>
+  {#if session}
+    <FileUpload {session} />
+  {/if}
+
   <div class="rounded-lg bg-white p-6 shadow">
     <h2 class="text-xl font-semibold">檔案列表 (即將推出)</h2>
   </div>
