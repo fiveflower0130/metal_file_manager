@@ -6,7 +6,7 @@
 
   let file: File | undefined;
   let uploading = false;
-  let uploadProgress = 0; // 我們會讓它保持為 0，並使用 CSS 動畫
+  let uploadProgress = 0; // pregress為0，並使用 CSS 動畫
   let message = '';
   let messageType: 'success' | 'error' = 'success';
 
@@ -46,22 +46,18 @@
     try {
       uploading = true;
       message = '';
-      uploadProgress = 0; // 重設
+      uploadProgress = 0;
       const userId = session.user.id;
       
       // 1. 上傳檔案到「儲存桶」
       const filePath = `${userId}/${file.name}`;
       
-      // --- 【修正】 ---
-      // 移除了錯誤的第 4 個參數 (progress callback)
-      // 移除了 options 中的 'duplex'
       const { error: uploadError } = await supabase.storage
         .from('file_upload') //
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false // false = 不允許覆蓋同名檔案
         });
-      // --- 【修正結束】 ---
 
       if (uploadError) {
         if (uploadError.message.includes('duplicate')) {
@@ -83,7 +79,7 @@
       const { error: dbError } = await supabase
         .from('files') //
         .insert({ // [cite: 16]
-          filename: file.name, // [cite: 16]
+          file_name: file.name, // [cite: 16]
           file_url: publicUrl, // [cite: 16]
           file_size: file.size, // [cite: 16]
           user_id: userId
@@ -99,7 +95,11 @@
       file = undefined;
       
     } catch (error: any) {
-      message = error.message || '上傳失敗。';
+      if (error.message.includes('Invalid key')) {
+         message = '上傳失敗：檔名可能包含無效字元 (例如 /)。請更換檔名後重試。';
+      } else {
+         message = error.message || '上傳失敗。';
+      }
       messageType = 'error';
     } finally {
       uploading = false;
