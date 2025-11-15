@@ -26,7 +26,7 @@
 <div class="space-y-6">
   <div class="flex items-center justify-between rounded-lg bg-white p-4 shadow">
     <div>
-      <h1 class="text-2xl font-bold">我的檔案</h1>
+      <h1 class="text-2xl font-bold">我的資料</h1>
       <p class="text-gray-600">歡迎, {session?.user?.email ?? '使用者'}</p>
     </div>
     <button 
