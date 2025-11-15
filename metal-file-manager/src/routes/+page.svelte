@@ -1,10 +1,10 @@
 <script lang="ts">
   import { supabase } from '$lib/supabaseClient'
   import { goto } from '$app/navigation'
-  import { onMount } from 'svelte'
   import type { PageData } from './$types'
   
-  import FileUpload from '$lib/components/FileUpload.svelte';
+  import FileUpload from '$lib/components/fileUpload.svelte';
+  import FileList from '$lib/components/fileList.svelte';
 
   export let data: PageData
   $: session = data.session
@@ -42,12 +42,15 @@
     </button>
   </div>
   
+  <!--需要 session 才顯示上傳元件-->
   {#if session}
     <FileUpload {session} />
+    <FileList />
   {/if}
   
-  <div class="rounded-lg bg-white p-6 shadow">
-    <h2 class="text-xl font-semibold">檔案列表 (即將推出)</h2>
-  </div>
+  <!--
+  {#if session}
+    <FileList />
+  {/if}-->
 
 </div>
