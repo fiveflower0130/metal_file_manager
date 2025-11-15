@@ -1,18 +1,21 @@
-<!-- <h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p> -->
-
 <script lang="ts">
   import { supabase } from '$lib/supabaseClient'
+  import { goto } from '$app/navigation'
+  import { onMount } from 'svelte'
   import type { PageData } from './$types'
-
-  // 1. 匯入我們剛建立的元件
-  import FileUpload from '$lib/components/fileUpload.svelte'; // <-- 修正：小寫 'f'
+  
+  import FileUpload from '$lib/components/FileUpload.svelte';
 
   export let data: PageData
   $: session = data.session
+  
+  // 反應式檢查 session，如果沒有就導向登入頁
+  $: if (typeof window !== 'undefined' && !session) {
+    goto('/login')
+  }
 
   const handleLogout = async () => {
-    console.log('handleLogout called...'); // <-- 除錯用
+    console.log('handleLogout called...');
     const { error } = await supabase.auth.signOut()
     
     if (error) {
@@ -20,6 +23,7 @@
       alert(error.message)
     } else {
       console.log('Supabase signOut successful.');
+      // SIGNED_OUT 事件會由 +layout.svelte 處理並導向
     }
   }
 </script>
@@ -41,7 +45,7 @@
   {#if session}
     <FileUpload {session} />
   {/if}
-
+  
   <div class="rounded-lg bg-white p-6 shadow">
     <h2 class="text-xl font-semibold">檔案列表 (即將推出)</h2>
   </div>

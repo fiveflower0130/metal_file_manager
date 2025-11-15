@@ -1,5 +1,15 @@
 <script lang="ts">
   import { supabase } from '$lib/supabaseClient'
+  import { goto } from '$app/navigation'
+  import type { PageData } from './$types'
+  
+  export let data: PageData
+  $: session = data.session
+  
+  // 反應式檢查 session，如果有就導向首頁
+  $: if (typeof window !== 'undefined' && session) {
+    goto('/')
+  }
   
   let email = ''
   let password = ''
@@ -12,8 +22,9 @@
       message = ''
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      // 登入成功，不需要手動 goto
-      // +layout.svelte 會偵測到 Auth 變化並觸發 +layout.ts 的守衛
+      
+      // onAuthStateChange 會自動觸發 SIGNED_IN 事件並導向
+      
     } catch (error: any) {
       message = error.message || "登入時發生錯誤"
     } finally {
@@ -28,7 +39,9 @@
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) throw error
       message = '註冊成功！請檢查您的 Email 以進行驗證。'
+      // 註冊後，我們停留在登入頁面，讓使用者去收信或登入
     } catch (error: any) {
+  
       message = error.message || "註冊時發生錯誤"
     } finally {
       loading = false
