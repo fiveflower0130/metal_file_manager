@@ -1,10 +1,15 @@
 # Metal File Manager
-This is a Take-Home Assignment for MetAI by Fiveflower0130(Dante Chen).
+
+This is a Take-Home Assignment for MetAI by Fiveflower0130 (Dante Chen).  
 A modern file management system built with SvelteKit and Supabase, featuring secure authentication, file upload/download, and real-time updates.
 
-## Ideas & Inspiration
+## Idea & Architecture Decision
 
-關於這個專案的架構我當初構思的方向主要有兩個，一是"傳統全端架構"，二是"BaaS 整合架構"，但當我看到貴司有提到使用SupaBase的時候，我覺得後者會是一個更好的選擇，因為它可以讓我專注於前端開發，而不必過多關注後端的細節，當然最主要的原因是因為有事情耽擱導致時間不足的關係，所以我選擇的較快的做法，不然我會嘗試兩個都做，所以還請多多包涵。
+關於這個專案的架構我當初構思的方向主要有兩個，一是"傳統全端架構"，二是"BaaS 整合架構"雖然作業允許使用 Python 後端，但我選擇了 **Supabase (BaaS) 架構**，原因如下：
+
+- **開發效率**：在 4-6 小時的時限內最大化開發速度
+- **一站式服務**：Supabase 整合了 Auth、PostgreSQL 資料庫和 S3 相容儲存
+- **專注核心功能**：讓我能專注於前端開發，而非後端基礎建設
 
 ## Features
 
