@@ -25,14 +25,27 @@
 
   const handleLogout = async () => {
     console.log('handleLogout called...');
-    const { error } = await supabase.auth.signOut()
     
-    if (error) {
-      console.error('Error logging out:', error.message);
-      alert(error.message)
-    } else {
-      console.log('Supabase signOut successful.');
-      // SIGNED_OUT 事件會由 +layout.svelte 處理並導向
+    try {
+      // 嘗試從 Supabase 登出
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      
+      if (error) {
+        console.error('Error logging out:', error.message);
+        // 如果遠端登出失敗，使用本地登出
+        console.log('Attempting local-only logout...');
+      } else {
+        console.log('Supabase signOut successful.');
+      }
+    } catch (err) {
+      console.error('Logout exception:', err);
+      // 捕捉任何異常（例如網路錯誤）
+    } finally {
+      // 手動清除瀏覽器的 localStorage 中的 session
+      localStorage.removeItem('sb-erlvkuxnpjstvytvcieh-auth-token')
+      
+      // 無論登出成功或失敗，都導向登入頁
+      goto('/login')
     }
   }
 </script>
